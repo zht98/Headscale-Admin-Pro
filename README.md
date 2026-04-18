@@ -56,12 +56,14 @@ docker-compose up -d
 
 
 # 版本关系
- 注意 runyf代表非官方原版headscale，因数据库适配问题不得不对headscale代码进行修改
+ 注意 runyf代表非官方原版headscale，因数据库适配问题不得不对headscale代码进行修改。从v3.0开始支持从上一个版本升级，操作之前请一定要备份好你的数据
 | Headscale-Admin-Pro | headscale |
 | --- | --- |
 | v2.7 | v0.25.1 |
 | v2.8 | v0.26.1 |
 | v3.0 | v0.27.1-runyf |
+| v4.0 | v0.28.0-runyf |
+
 
 
 

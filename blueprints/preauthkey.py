@@ -4,75 +4,80 @@ from flask_login import current_user, login_required
 from flask import Blueprint, request,current_app
 from exts import SqliteDB
 from utils import table_res, res, to_request
+import json
+from datetime import datetime
 
 bp = Blueprint("preauthkey", __name__, url_prefix='/api/preauthkey')
+
 
 
 
 @bp.route('/getPreAuthKey')
 @login_required
 def getPreAuthKey():
-    page = request.args.get('page', default=1, type=int)
-    per_page = request.args.get('limit', default=10, type=int)
-    offset = (page - 1) * per_page
+    # 调用 Headscale API 获取所有预共享密钥
+    url = '/api/v1/preauthkey'
+    response = to_request('GET', url)
 
-    with SqliteDB() as cursor:
-        # 构建基础查询语句
-        base_query = """
-            SELECT 
-                pre_auth_keys.id,
-                pre_auth_keys.key,
-                users.name,
-                strftime('%Y-%m-%d %H:%M:%S', pre_auth_keys.created_at, 'localtime') as created_at,
-                strftime('%Y-%m-%d %H:%M:%S', pre_auth_keys.expiration, 'localtime') as expiration
-            FROM 
-                pre_auth_keys
-            JOIN 
-                users ON pre_auth_keys.user_id = users.id
-        """
+    # 校验 API 响应是否成功
+    if response['code'] != '0':
+        return res(response['code'], response['msg'])
 
-        # 判断用户角色
+    # 解析 API 返回数据
+    api_data = json.loads(response['data'])
+    all_pre_auth_keys = api_data.get('preAuthKeys', [])
+
+    # 按角色过滤数据
+    filtered_keys = []
+    for key in all_pre_auth_keys:
         if current_user.role != 'manager':
-            base_query += " WHERE pre_auth_keys.user_id =? "
-            params = (current_user.id,)
+            if int(key['user']['id']) == current_user.id:
+                filtered_keys.append(key)
         else:
-            params = ()
+            filtered_keys.append(key)
 
-        # 查询总记录数
-        count_query = f"SELECT COUNT(*) as total FROM ({base_query})"
-        cursor.execute(count_query, params)
-        total_count = cursor.fetchone()['total']
+    # 计算总记录数
+    total_count = len(filtered_keys)
 
-        # 分页查询
-        paginated_query = f"{base_query} LIMIT? OFFSET? "
-        paginated_params = params + (per_page, offset)
-        cursor.execute(paginated_query, paginated_params)
-        pre_auth_keys = cursor.fetchall()
+    # 取消分页，直接使用所有数据
+    paginated_keys = filtered_keys
 
     # 数据格式化
     pre_auth_keys_list = []
-    for pre_auth_key in pre_auth_keys:
+    for key in paginated_keys:
+        # 处理创建时间
+        created_at_utc = datetime.fromisoformat(key['createdAt'].replace('Z', '+00:00'))
+        created_at_local = created_at_utc.astimezone()
+        create_time = created_at_local.strftime('%Y-%m-%d %H:%M:%S')
+
+        # 处理过期时间
+        expiration = ''
+        if key['expiration']:
+            expiration_utc = datetime.fromisoformat(key['expiration'].replace('Z', '+00:00'))
+            expiration_local = expiration_utc.astimezone()
+            expiration = expiration_local.strftime('%Y-%m-%d %H:%M:%S')
+
         pre_auth_keys_list.append({
-            'id': pre_auth_key['id'],
-            'key': pre_auth_key['key'],
-            'name': pre_auth_key['name'],
-            'create_time': pre_auth_key['created_at'],
-            'expiration': pre_auth_key['expiration']
+            'id': key['id'],
+            'key': key['key'],
+            'name': key['user']['name'],
+            'create_time': create_time,
+            'expiration': expiration
         })
 
+    return table_res('0','获取成功', pre_auth_keys_list, total_count, len(pre_auth_keys_list))
 
 
-    return table_res('0','获取成功',pre_auth_keys_list,total_count,len(pre_auth_keys_list))
+
 
 @bp.route('/addKey', methods=['GET','POST'])
 @login_required
 def addKey():
 
-    user_name = current_user.id
     expire_date = datetime.now() + timedelta(days=7)
 
     url =  f'/api/v1/preauthkey'
-    data = {'user':user_name,'reusable':True,'ephemeral':False,'expiration':expire_date.isoformat() + 'Z'}
+    data = {'user':current_user.id,'reusable':True,'ephemeral':False,'expiration':expire_date.isoformat() + 'Z'}
 
     response = to_request('POST',url,data)
 

@@ -160,28 +160,6 @@ def delete():
 
 
 
-@bp.route('/new_owner', methods=['GET','POST'])
-@login_required
-@role_required("manager")
-def new_owner():
-
-    node_id = request.form.get('nodeId')
-    user_name = request.form.get('userName')
-
-    url = f'/api/v1/node/{node_id}/user'  # 替换为实际的目标 URL
-
-    data = {"user": user_name}
-
-    with SqliteDB() as cursor:
-        user_id = cursor.execute("SELECT user_id FROM nodes WHERE id =? ", (node_id,)).fetchone()[0]
-    if user_id == current_user.id or current_user.role == 'manager':
-        response = to_request('POST', url, data)
-        if response['code'] == '0':
-            return res('0', '更新成功', response['data'])
-        else:
-            return res(response['code'], response['msg'])
-    else:
-        return res('1', '非法请求')
 
 
 

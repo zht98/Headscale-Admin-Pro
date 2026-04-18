@@ -66,7 +66,12 @@
       ,height: 'full-100' // 最大高度减去其他容器已占有的高度差
       ,cellMinWidth: 80
       ,totalRow: true // 开启合计行
-      ,page: true
+      ,page: false
+      // ✅ 关键：默认按 create_time 倒序
+      ,initSort: {
+        field: 'create_time',
+        type: 'desc'
+      }
       ,cols: [[
             {field:'id', title:'ID', width:10, unresize: true, sort: true, totalRowText: '合计：'}
             {% if current_user.role == 'manager' %}
@@ -77,7 +82,7 @@
                     ,totalRow: ' {% raw %}{{= d.TOTAL_ROW.count   }}{% endraw %} 😊'
                 {% endif %}
             }
-            ,{field:'create_time', title:'创建时间',width:300}
+            ,{field:'create_time', title:'创建时间',width:300, sort: true}
             ,{field:'expiration', title: '到期时间', width:300, sort: true}
             ,{fixed: 'right', title:'操作', width: 70, minWidth: 70, toolbar: '#barDemo'}
         ]]
@@ -89,39 +94,53 @@
 
     
     
-    // 工具栏事件
-    table.on('toolbar(test-table-index)', function(obj){
-      var $ = layui.$;
-      var util = layui.util;
-      var id = obj.config.id;
-      var checkStatus = table.checkStatus(id);
-      var othis = lay(this);
-      switch(obj.event){
-        case 'reload':
-          table.reload('test-table-index',true);
-        break;
-        case 'add':
-          layer.confirm('真的需要使用吗', function(index){
-            $.ajax({
-              url:'/api/preauthkey/addKey',
-              type: 'post',
-              dataType: 'json',
-              success:function(res){
-                if(res.code == 0){
-                  layer.msg('新建成功', {icon: 6});
-                  table.reload('test-table-index',true);
-                }else{
-                  layer.msg('新建失败', {icon: 7});
-                }
-              }
-            });
-          });
-          
-        break;
+  // 工具栏事件
+  table.on('toolbar(test-table-index)', function(obj){
+    var $ = layui.$;
+    var util = layui.util;
+    var id = obj.config.id;
+    var checkStatus = table.checkStatus(id);
+    var othis = lay(this);
+    switch(obj.event){
+      case 'reload':
+        table.reload('test-table-index',true);
+      break;
+      case 'add':
+        layer.confirm('确认创建新的预授权密钥？', function(index){
+          // ✅ 第一步：先关闭当前确认弹窗
+          layer.close(index);
 
-      
-      };
-    });
+          $.ajax({
+            url:'/api/preauthkey/addKey',
+            type: 'post',
+            dataType: 'json',
+            success:function(res){
+              if(res.code == 0){
+                var data = JSON.parse(res.data);
+                var key = data.preAuthKey.key;
+
+                // 弹出密钥框（不会重叠）
+                layer.prompt({
+                  title: '⚠️ 密钥只显示一次，请立即保存！',
+                  formType: 2,
+                  value: key,
+                  readonly: true,
+                  id: 'keyPrompt' // 给弹窗一个ID，防止重复
+                }, function(value, index){
+                  layer.close(index);
+                  // table.reload('test-table-index', true);
+                });
+              }else{
+                layer.msg('新建失败', {icon: 7});
+              }
+            }
+          });
+        });
+      break;
+    };
+  });
+
+
    
     //触发单元格工具事件
     table.on('tool(test-table-index)', function(obj){ // 双击 toolDouble

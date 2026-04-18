@@ -113,7 +113,7 @@
       ,cols: [[
             {field:'id', fixed: 'left', width:80, title: 'ID', sort: true, totalRowText: '合计：'}
             {% if current_user.role == 'manager' %}
-                ,{field:'userName', width:180, title: '用户名', sort: true, edit: 'text',totalRow: '  {% raw %}{{= d.TOTAL_ROW.count   }}{% endraw %} 😊'}
+                ,{field:'userName', width:180, title: '用户名', sort: true,totalRow: '  {% raw %}{{= d.TOTAL_ROW.count   }}{% endraw %} 😊'}
             {% endif %}
             ,{field:'name', width:180, title: '节点名', edit: 'text'
                 {% if current_user.role == 'user' %}
@@ -189,20 +189,6 @@
             if(res.code == 0){
               layer.msg(res.msg, {icon: 6});
               obj.update({name: value});
-            }else{
-              layer.msg(res.msg, {icon: 7});
-            }
-          }
-        });
-      }else if(field == "userName"){
-        $.ajax({
-          url:'/api/node/new_owner',
-          type: 'post',
-          dataType: 'json',
-          data: {nodeId: data.id, userName: value},
-          success:function(res){
-            if(res.code == 0){
-              layer.msg(res.msg, {icon: 6});
             }else{
               layer.msg(res.msg, {icon: 7});
             }
