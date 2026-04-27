@@ -6,9 +6,9 @@ services:
     network_mode: host
     restart: unless-stopped  
     volumes:  
-      - ~/hs-admin/app:/app
-      - ~/hs-admin/config:/etc/headscale
-      - ~/hs-admin/data:/var/lib/headscale
+      - ./app:/app
+      - ./config:/etc/headscale
+      - ./data:/var/lib/headscale
     environment:
       - TZ=Asia/Shanghai
       - FLASK_DEBUG=False
