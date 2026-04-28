@@ -1,9 +1,15 @@
 name: Build and Push Docker Image
 
 on:
-  push:
-    branches: [ main ]
-    tags: [ 'v*' ]
+  # push:
+    # branches: [ main ]
+    # tags: [ 'v*' ]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "自定义版本号，例如 v1.0.0"
+        required: true
+        type: string
 
 jobs:
   build:
@@ -26,12 +32,14 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: runyf/hs-admin
+          images: zht98/hs-admin
           tags: |
             # 删掉 type=ref,event=branch（避免生成main标签）
-            type=ref,event=tag  # 标签触发时生成：runyf/hs-admin:v1.0.0
+            # type=ref,event=tag  # 标签触发时生成：runyf/hs-admin:v1.0.0
             # 仅main分支触发时生成latest标签（无main标签）
-            type=raw,value=latest,enable={{is_default_branch}}
+            # type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=${{ github.event.inputs.version }}
+            type=raw,value=latest
 
       - name: Build and push
         uses: docker/build-push-action@v5
