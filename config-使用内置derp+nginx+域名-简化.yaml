@@ -42,16 +42,8 @@ derp:
   
   # 以 JSON 编码的外部可用 DERP Map 列表
   urls: []
-  #  - https://controlplane.tailscale.com/derpmap/default
-  # 以 YAML 编码的本地可用 DERP Map 文件
-  # 此选项主要适用于自行托管 DERP 服务器的用户：
-  # https://tailscale.com/kb/1118/custom-derp-servers/
-  #
-  # paths:
-  #   - /etc/headscale/derp-example.yaml
-  # paths: /etc/headscale/derp.yaml
   paths: []
-    # - /etc/headscale/derp.yaml
+
   如果启用，将设置一个工作线程定期刷新给定源并更新 derpmap。
   auto_update_enabled: false
   # 我们应该多久检查一次 DERP 更新？
@@ -82,28 +74,7 @@ database:
   # 请注意，使用 Postgres 非常不推荐，因为它仅因历史原因被支持。
 
 ### ----TLS 配置---
-## 自动证书管理环境 Let's Encrypt / ACME  
-# Headscale 支持使用 Let's Encrypt 自动申请并设置域名的 TLS。
-# ACME 目录 URL
-## acme_url: https://acme-v02.api.letsencrypt.org/directory
-# 注册 ACME 提供商的邮箱
-## acme_email: "zhaohuan1196@gmail.com"
-# 要申请 TLS 证书的域名：
-## tls_letsencrypt_hostname: "he.zht.cc.cd"
-# 存储 Let's Encrypt 所需的证书和元数据的路径
-# 生产环境建议：
-## tls_letsencrypt_cache_dir: /var/lib/headscale/cache
-# 要使用的 ACME 挑战类型，目前支持的类型：
-# HTTP-01 或 TLS-ALPN-01
-## tls_letsencrypt_challenge_type: HTTP-01
-# 当选择 HTTP-01 挑战时，Let's Encrypt 必须设置验证端点，
-# 它将监听在：
-# :http = 端口 80
-## tls_letsencrypt_listen: ":80"
 
-## 使用已定义的证书：
-# tls_cert_path: /etc/headscale/cert/cert.pem
-# tls_key_path: /etc/headscale/cert/key.pem
 # ----日志配置---
 log:
   format: text
@@ -118,19 +89,16 @@ policy:
   path: "acl.hujson"
 
 ## ----DNS 配置---
-# headscale supports Tailscale's DNS configuration and MagicDNS.
+# Headscale 支持 Tailscale 的 DNS 配置和 MagicDNS。
 # 请注意，要使 DNS 配置生效，客户端必须启用 `--accept-dns=true` 选项。
 # 这是 Tailscale 客户端的默认设置。
-# 设置 DNS 配置下的任意字段并在客户端启用 `--accept-dns=true` 将与客户端的 DNS 管理器集成，
-# 或覆盖 /etc/resolv.conf。
+# 设置 DNS 配置下的任意字段并在客户端启用 `--accept-dns=true` 将与客户端的 DNS 管理器集成或覆盖 /etc/resolv.conf。
 # https://tailscale.com/kb/1235/resolv-conf
-# 如果您想停止 Headscale 管理 DNS 配置，
-# 则 `dns` 下的所有字段都应设置为空值。
+# 如果您想停止 Headscale 管理 DNS 配置，则 `dns` 下的所有字段都应设置为空值。
 dns:
   # 是否使用 [MagicDNS](https://tailscale.com/kb/1081/magicdns/)。
   magic_dns: true
-  # 定义用于创建 MagicDNS 主机名的基础域名。
-  # 此域名必须与 server_url 的域名不同。
+  # 定义用于创建 MagicDNS 主机名的基础域名。 此域名必须与 server_url 的域名不同。
   # `base_domain` 必须是 FQDN，不带末尾的点。
   # 主机的 FQDN 将是 `hostname.base_domain`（例如 _myhost.example.com_）。
   base_domain: example.com
@@ -148,11 +116,9 @@ dns:
       # darp.headscale.net:
       #   - 1.1.1.1
       #   - 8.8.8.8
-  # 设置自定义 DNS 搜索域。启用 MagicDNS 时，
-  # 您的 tailnet base_domain 始终是第一个搜索域。
+  # 设置自定义 DNS 搜索域。启用 MagicDNS 时，您的 tailnet base_domain 始终是第一个搜索域。
   search_domains: []
-  # 额外的 DNS 记录
-  # 目前仅支持 A 和 AAAA 记录（在 Tailscale 端）
+  # 额外的 DNS 记录，目前仅支持 A 和 AAAA 记录（在 Tailscale 端）
   extra_records: []
   #   - name: "grafana.myvpn.example.com"
   #     type: "A"
@@ -166,7 +132,7 @@ dns:
   # extra_records_path: /var/lib/headscale/extra-records.json
 
 # ----CLI Unix Socket---
-# CLI 用于无需认证连接的 Unix socket
+# CLI 用于无需认证连接的 Unix socket，
 # 注意：生产环境建议设置为类似以下路径：
 unix_socket: /var/run/headscale/headscale.sock
 unix_socket_permission: "0770"
