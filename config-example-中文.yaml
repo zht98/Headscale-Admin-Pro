@@ -1,0 +1,379 @@
+# ----配置文件查找路径---
+# Headscale 将按以下顺序查找名为 `config.yaml`（或 `config.json`）的配置文件：
+#
+# - `/etc/headscale`
+# - `~/.headscale`
+# - 当前工作目录
+
+# ----服务器 URL---
+# 客户端将连接的 URL。
+# 通常这是一个域名，例如：
+# https://myheadscale.example.com:443
+server_url: 'http://IP:端口'
+
+# ----服务器监听地址---
+# 服务器监听 / 绑定的地址
+# 生产环境建议：
+# listen_addr: 0.0.0.0:8080
+listen_addr: 0.0.0.0:8080
+
+# ----服务器域名/协议---
+protocol: http
+host: 127.0.0.1
+
+# ----指标监听地址---
+# /metrics 指标接口的监听地址，您可能希望
+# 将此端点保持在内部网络中，防止外部访问
+metrics_listen_addr: 127.0.0.1:9090
+
+# ----gRPC 监听地址---
+# gRPC 监听地址。
+# gRPC 用于通过 CLI 远程控制 Headscale 服务器
+# 注意：远程访问仅在拥有有效证书时可用。
+#
+# 生产环境建议：
+# grpc_listen_addr: 0.0.0.0:50443
+grpc_listen_addr: 127.0.0.1:50443
+
+# ----gRPC 安全设置---
+# 允许 gRPC 管理接口以不安全（INSECURE）模式运行。
+# 不推荐开启，因为流量将是未加密的。只有在您清楚自己在做什么时才启用。
+grpc_allow_insecure: false
+
+# ----Noise 协议配置---
+# Noise 部分包含 TS2021 Noise 协议的特定配置
+noise:
+  # Noise 私钥用于在使用新的基于 Noise 的协议时，
+  # 加密 Headscale 与 Tailscale 客户端之间的流量。
+  private_key_path: /var/lib/headscale/noise_private.key
+
+# ----IP 地址前缀---
+# 用于分配 Tailscale 地址的 IP 前缀列表。
+# 每个前缀由 IPv4 或 IPv6 地址及前缀长度组成，用斜杠分隔。
+# 必须位于 Tailscale 客户端支持的 IP 范围内，即 100.64.0.0/10 和 fd7a:115c:a1e0::/48 的子网。
+# 参见下方链接：
+# IPv6: https://github.com/tailscale/tailscale/blob/22ebb25e833264f58d7c3f534a8b166894a89536/net/tsaddr/tsaddr.go#LL81C52-L81C71
+# IPv4: https://github.com/tailscale/tailscale/blob/22ebb25e833264f58d7c3f534a8b166894a89536/net/tsaddr/tsaddr.go#L33
+# 任何其他范围均不受支持，会导致意外问题。
+prefixes:
+  v4: 100.64.0.0/10
+  # v6: fd7a:115c:a1e0::/48
+
+  # 分配给节点的 IP 策略，可用选项：
+  # - sequential（默认）：从之前给定的 IP 开始分配下一个可用 IP。
+  # - random：使用伪随机 IP 生成器（crypto/rand）分配下一个可用 IP。
+  allocation: sequential
+
+# ----DERP 中继配置---
+# DERP 是 Tailscale 在无法建立直接连接时使用的中继系统。
+# https://tailscale.com/blog/how-tailscale-works/#encrypted-tcp-relays-derp
+#
+# Headscale 需要一个可呈现给客户端的 DERP 服务器列表。
+derp:
+  server:
+    # 如果启用，将运行内置的 DERP 服务器并将其合并到其余 DERP 配置中
+    # 上方定义的 Headscale server_url 必须使用 https，DERP 需要 TLS
+    enabled: true
+
+    # 内置 DERP 服务器使用的区域 ID。
+    # 如果区域 ID 与来自常规 DERP 配置的其他区域 ID 冲突，则本地 DERP 优先。
+    region_id: 999
+
+    # 区域代码和名称将在 Tailscale UI 中显示，用于标识 DERP 区域
+    region_code: "headscale"
+    region_name: "Headscale Embedded DERP"
+
+    # 通过 UDP 在配置的地址上监听 STUN 连接，用于帮助 NAT 穿透。
+    # 当启用内置 DERP 服务器时，必须定义 stun_listen_addr。
+    # 有关工作原理的更多细节，请查看这篇优秀文章：https://tailscale.com/blog/how-tailscale-works/
+    stun_listen_addr: "0.0.0.0:3478"
+
+    # 用于加密 Headscale DERP 与 Tailscale 客户端之间流量的私钥。
+    # 如果私钥文件不存在，将自动生成。
+    private_key_path: /var/lib/headscale/derp_server_private.key
+
+    # 此标志可用于不自动写入内置 DERP 服务器的 DERP Map 条目，
+    # 它允许您使用 DERP.paths 参数通过本地可用文件创建自己的 DERP Map 条目
+    # 如果您启用 DERP 服务器并将此设置为 false，则必须使用 DERP.paths 添加 DERP 服务器
+    automatically_add_embedded_derp_region: true
+
+    # 为获得更好的连接稳定性（特别是在使用 Exit-Node 且 DNS 不工作时），
+    # 可以选择添加公网 IPv4 和 IPv6 地址到 Derp-Map：
+    ipv4: 1.2.3.4
+    ipv6: 2001:db8::1
+
+  # 以 JSON 编码的外部可用 DERP Map 列表
+  urls:
+  #  - https://controlplane.tailscale.com/derpmap/default
+
+  # 以 YAML 编码的本地可用 DERP Map 文件
+  # 此选项主要适用于自行托管 DERP 服务器的用户：
+  # https://tailscale.com/kb/1118/custom-derp-servers/
+  #
+  # paths:
+  #   - /etc/headscale/derp-example.yaml
+  # paths: /etc/headscale/derp.yaml
+  paths:
+    - /etc/headscale/derp.yaml
+  # 如果启用，将设置一个工作线程定期刷新给定源并更新 derpmap。
+  auto_update_enabled: true
+
+  # 我们应该多久检查一次 DERP 更新？
+  update_frequency: 24h
+
+# ----更新检查---
+# 禁用启动时自动检查 Headscale 更新
+disable_check_updates: false
+
+# ----临时节点超时---
+# 非活跃的临时节点在多长时间后被删除？
+ephemeral_node_inactivity_timeout: 30m
+
+# ----数据库配置---
+database:
+  # 数据库类型。可用选项：sqlite、postgres
+  # 请注意，使用 Postgres 非常不推荐，因为它仅因历史原因被支持。
+  # 所有新的开发、测试和优化都是基于 SQLite 进行的。
+  type: sqlite
+
+  # 启用调试模式。此设置需要将 log.level 设置为 "debug" 或 "trace"。
+  debug: false
+
+  # GORM 配置设置。
+  gorm:
+    # 启用预编译语句。
+    prepare_stmt: true
+
+    # 启用参数化查询。
+    parameterized_queries: true
+
+    # 跳过记录 "record not found" 错误的日志。
+    skip_err_record_not_found: true
+
+    # 慢查询阈值（毫秒）。
+    slow_threshold: 1000
+
+  # SQLite 配置
+  sqlite:
+    path: /var/lib/headscale/db.sqlite
+
+    # 启用 SQLite 的 WAL 模式。推荐用于生产环境。
+    # https://www.sqlite.org/wal.html
+    write_ahead_log: true
+
+    # WAL 文件自动检查点之前的最大帧数。
+    # https://www.sqlite.org/c3ref/wal_autocheckpoint.html
+    # 设置为 0 以禁用自动检查点。
+    wal_autocheckpoint: 1000
+
+  # # Postgres 配置
+  # 请注意，使用 Postgres 非常不推荐，因为它仅因历史原因被支持。
+  # 有关更多信息，请参见 database.type。
+  # postgres:
+  #   # 如果使用 Unix socket 连接到 Postgres，请在 'host' 字段中设置 socket 路径，并将 'port' 留空。
+  #   host: localhost
+  #   port: 5432
+  #   name: headscale
+  #   user: foo
+  #   pass: bar
+  #   max_open_conns: 10
+  #   max_idle_conns: 10
+  #   conn_max_idle_time_secs: 3600
+
+  #   # 如果需要其他 'sslmode' 而不是 'require(true)' 和 'disabled(false)'，请在 'ssl' 字段中设置您需要的 'sslmode'
+  #   # 参考 https://www.postgresql.org/docs/current/libpq-ssl.html 表 34.1。
+  #   ssl: false
+
+# ----TLS 配置---
+# 自动证书管理环境 Let's Encrypt / ACME  
+#
+# Headscale 支持使用 Let's Encrypt 自动申请并设置域名的 TLS。
+#
+# ACME 目录 URL
+acme_url: https://acme-v02.api.letsencrypt.org/directory
+
+# 注册 ACME 提供商的邮箱
+acme_email: ""
+
+# 要申请 TLS 证书的域名：
+tls_letsencrypt_hostname: ""
+
+# 存储 Let's Encrypt 所需的证书和元数据的路径
+# 生产环境建议：
+tls_letsencrypt_cache_dir: /var/lib/headscale/cache
+
+# 要使用的 ACME 挑战类型，目前支持的类型：
+# HTTP-01 或 TLS-ALPN-01
+# 更多信息请参见：docs/ref/tls.md
+tls_letsencrypt_challenge_type: HTTP-01
+# 当选择 HTTP-01 挑战时，Let's Encrypt 必须设置验证端点，
+# 它将监听在：
+# :http = 端口 80
+tls_letsencrypt_listen: ":http"
+
+## 使用已定义的证书：
+tls_cert_path: ""
+tls_key_path: ""
+
+# ----日志配置---
+log:
+  # 日志输出格式：text 或 json
+  format: text
+  level: info
+
+# ----ACL 策略配置---
+## 策略
+# Headscale 支持 Tailscale 的 ACL 策略。
+# 请查看他们的知识库以更好地理解概念：https://tailscale.com/kb/1018/acls/
+policy:
+  # 模式可以是 "file" 或 "database"，用于定义 ACL 策略的存储和读取位置。
+  mode: file
+  # 如果模式设置为 "file"，则为包含 ACL 策略的 HuJSON 文件路径。
+  path: "acl.hujson"
+
+# ----DNS 配置---
+# Headscale 支持 Tailscale 的 DNS 配置和 MagicDNS。
+# 请查看他们的知识库以更好地理解概念：
+#
+# - https://tailscale.com/kb/1054/dns/
+# - https://tailscale.com/kb/1081/magicdns/
+# - https://tailscale.com/blog/2021-09-private-dns-with-magicdns/
+#
+# 请注意，要使 DNS 配置生效，客户端必须启用 `--accept-dns=true` 选项。
+# 这是 Tailscale 客户端的默认设置。
+#
+# 设置 DNS 配置下的任意字段并在客户端启用 `--accept-dns=true` 将与客户端的 DNS 管理器集成，
+# 或覆盖 /etc/resolv.conf。
+# https://tailscale.com/kb/1235/resolv-conf
+#
+# 如果您想停止 Headscale 管理 DNS 配置，
+# 则 `dns` 下的所有字段都应设置为空值。
+dns:
+  # 是否使用 [MagicDNS](https://tailscale.com/kb/1081/magicdns/)。
+  magic_dns: true
+
+  # 定义用于创建 MagicDNS 主机名的基础域名。
+  # 此域名必须与 server_url 的域名不同。
+  # `base_domain` 必须是 FQDN，不带末尾的点。
+  # 主机的 FQDN 将是 `hostname.base_domain`（例如 _myhost.example.com_）。
+  base_domain: example.com
+
+  # 暴露给客户端的 DNS 服务器列表。
+  nameservers:
+    global:
+      - 1.1.1.1
+      - 1.0.0.1
+      - 2606:4700:4700::1111
+      - 2606:4700:4700::1001
+
+      # NextDNS（参见 https://tailscale.com/kb/1218/nextdns/）。
+      # "abc123" 是示例 NextDNS ID，请替换为您的。
+      # - https://dns.nextdns.io/abc123
+
+    # Split DNS（参见 https://tailscale.com/kb/1054/dns/），
+    # 域名与对应 DNS 服务器的映射。
+    split: {}
+      # foo.bar.com:
+      #   - 1.1.1.1
+      # darp.headscale.net:
+      #   - 1.1.1.1
+      #   - 8.8.8.8
+
+  # 设置自定义 DNS 搜索域。启用 MagicDNS 时，
+  # 您的 tailnet base_domain 始终是第一个搜索域。
+  search_domains: []
+
+  # 额外的 DNS 记录
+  # 目前仅支持 A 和 AAAA 记录（在 Tailscale 端）
+  # 参见：docs/ref/dns.md
+  extra_records: []
+  #   - name: "grafana.myvpn.example.com"
+  #     type: "A"
+  #     value: "100.64.0.3"
+  #
+  #   # 也可以写成一行
+  #   - { name: "prometheus.myvpn.example.com", type: "A", value: "100.64.0.3" }
+  #
+  # 或者，额外的 DNS 记录可以从 JSON 文件加载。
+  # Headscale 在每次更改时处理此文件。
+  # extra_records_path: /var/lib/headscale/extra-records.json
+
+# ----CLI Unix Socket---
+# CLI 用于无需认证连接的 Unix socket
+# 注意：生产环境建议设置为类似以下路径：
+unix_socket: /var/run/headscale/headscale.sock
+unix_socket_permission: "0770"
+
+# ----OpenID Connect 配置---
+#
+# Headscale 支持实验性的 OpenID Connect 支持，
+# 它仍在测试中，可能存在一些 bug，请帮助我们测试。
+# oidc:
+#   仅在 OIDC 可用时才启动: true
+#   发行者（OIDC Issuer）: "https://your-oidc.issuer.com/path"
+#   客户端 ID: "your-oidc-client-id"
+#   客户端密钥: "your-oidc-client-secret"
+#   # 或者，设置 `client_secret_path` 从文件读取密钥。
+#   # 它会解析环境变量，便于与 systemd 的 LoadCredential 集成：
+#   client_secret_path: "${CREDENTIALS_DIRECTORY}/oidc_client_secret"
+#   # client_secret 和 client_secret_path 互斥。
+#
+#   # 从节点通过 OpenID 认证到过期需要重新认证的时间。
+#   # 设置为 "0" 表示永不过期。
+#   expiry: 180d
+#
+#   # 使用从 OpenID 登录时收到的 token 中的过期时间，
+#   # 这通常会导致频繁重新认证，仅在您清楚自己在做什么时启用。
+#   # 注意：启用此选项将忽略 `oidc.expiry`。
+#   use_expiry_from_token: false
+#
+#   # 自定义 OIDC 流程中使用的 scope，默认是 "openid"、"profile" 和 "email"，并添加自定义查询参数到 Authorize Endpoint 请求。
+#   scope: ["openid", "profile", "email", "custom"]
+#   extra_params:
+#     domain_hint: example.com
+#
+#   # 允许的主域和/或用户列表。如果认证用户的域不在此列表中，认证请求将被拒绝。
+#
+#   allowed_domains:
+#     - example.com
+#   # 注意：来自 Keycloak 的组以 '/' 开头
+#   allowed_groups:
+#     - /headscale
+#   allowed_users:
+#     - alice@example.com
+#
+#   # 可选：PKCE（Proof Key for Code Exchange）配置
+#   # PKCE 为 OAuth 2.0 授权码流程增加额外安全层，防止授权码拦截攻击
+#   # 参见 https://datatracker.ietf.org/doc/html/rfc7636
+#   pkce:
+#     # 启用或禁用 PKCE 支持（默认：false）
+#     enabled: false
+#     # 使用的 PKCE 方法：
+#     # - plain：使用明文 code verifier
+#     # - S256：使用 SHA256 哈希的 code verifier（默认，推荐）
+#     method: S256
+#
+#   # 将 0.24.0 版本之前的遗留用户映射到新的 OIDC 用户，
+#   # 通过从遗留用户获取用户名并与 OIDC 提供的用户名匹配。
+#   # 这在从遗留用户迁移到 OIDC 时非常有用，可强制使用 OIDC 的唯一标识符，
+#   # 并在可用时提供正确的显示名称和头像。
+#   # 注意：仅当遗留用户的用户名相同且用户名未在提供商处更改时有效，否则可能导致账户接管。
+#   # 当此功能禁用时，所有新登录都将创建为新用户。
+#   # 注意：此选项将在未来移除，新安装应设置为 false，或所有用户已通过 OIDC 登录一次后设置为 false。
+#   map_legacy_users: false
+
+# ----Logtail 日志配置---
+# Logtail 是 Tailscale 的日志和审计基础设施，它允许控制面板指示 Tailscale 节点将其活动日志发送到远程服务器。
+logtail:
+  # 为此 Headscale 的客户端启用 Logtail。
+  # 由于 Headscale 目前不支持覆盖日志服务器，此功能默认禁用。
+  # 启用后，您的客户端将把日志发送给 Tailscale Inc.。
+  enabled: false
+
+# ----WireGuard 端口随机化---
+# 启用此选项会使设备在 WireGuard 流量中优先使用随机端口，而不是默认的静态端口 41641。
+# 此选项旨在作为某些有问题的防火墙设备的临时解决方案。
+# 更多信息请参见：https://tailscale.com/kb/1181/firewalls/
+randomize_client_port: false
+
+
