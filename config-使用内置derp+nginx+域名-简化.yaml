@@ -1,0 +1,183 @@
+# ----服务器 URL---
+server_url: 'https://域名:端口'
+
+# ----服务器 监听端口---
+listen_addr: 0.0.0.0:8080
+
+# ----服务器 域名/协议---
+protocol: http
+host: 127.0.0.1
+
+# ----指标监听地址---
+metrics_listen_addr: 127.0.0.1:9090
+
+# ----gRPC 监听地址---
+grpc_listen_addr: 127.0.0.1:50443
+
+# ----gRPC 安全设置---
+grpc_allow_insecure: false
+
+# ----Noise 协议配置---
+noise:
+  private_key_path: /var/lib/headscale/noise_private.key
+
+# ----IP 地址前缀---
+prefixes:
+  v4: 100.64.0.0/10
+  # v6: fd7a:115c:a1e0::/48
+  allocation: sequential
+
+# ----DERP 中继配置---
+derp:
+  server:
+    enabled: true
+    region_id: 999
+    region_code: "headscale"
+    region_name: "Headscale Embedded DERP"
+    stun_listen_addr: "0.0.0.0:3478"
+    private_key_path: /var/lib/headscale/derp_server_private.key
+    automatically_add_embedded_derp_region: true
+    ipv4: 59.46.224.34
+    # ipv6: 2001:db8::1
+  
+  # 以 JSON 编码的外部可用 DERP Map 列表
+  urls: []
+  #  - https://controlplane.tailscale.com/derpmap/default
+  # 以 YAML 编码的本地可用 DERP Map 文件
+  # 此选项主要适用于自行托管 DERP 服务器的用户：
+  # https://tailscale.com/kb/1118/custom-derp-servers/
+  #
+  # paths:
+  #   - /etc/headscale/derp-example.yaml
+  # paths: /etc/headscale/derp.yaml
+  paths: []
+    # - /etc/headscale/derp.yaml
+  如果启用，将设置一个工作线程定期刷新给定源并更新 derpmap。
+  auto_update_enabled: false
+  # 我们应该多久检查一次 DERP 更新？
+  update_frequency: 24h
+
+# ----更新检查---
+disable_check_updates: false
+
+# ----临时节点超时---
+ephemeral_node_inactivity_timeout: 30m
+
+# ----数据库配置---
+database:
+  type: sqlite
+  debug: false
+  # GORM 配置设置。
+  gorm:
+    prepare_stmt: true
+    parameterized_queries: true
+    skip_err_record_not_found: true
+    slow_threshold: 1000
+  # SQLite 配置
+  sqlite:
+    path: /var/lib/headscale/db.sqlite
+    write_ahead_log: true
+    wal_autocheckpoint: 1000
+  # # Postgres 配置
+  # 请注意，使用 Postgres 非常不推荐，因为它仅因历史原因被支持。
+
+### ----TLS 配置---
+## 自动证书管理环境 Let's Encrypt / ACME  
+# Headscale 支持使用 Let's Encrypt 自动申请并设置域名的 TLS。
+# ACME 目录 URL
+## acme_url: https://acme-v02.api.letsencrypt.org/directory
+# 注册 ACME 提供商的邮箱
+## acme_email: "zhaohuan1196@gmail.com"
+# 要申请 TLS 证书的域名：
+## tls_letsencrypt_hostname: "he.zht.cc.cd"
+# 存储 Let's Encrypt 所需的证书和元数据的路径
+# 生产环境建议：
+## tls_letsencrypt_cache_dir: /var/lib/headscale/cache
+# 要使用的 ACME 挑战类型，目前支持的类型：
+# HTTP-01 或 TLS-ALPN-01
+## tls_letsencrypt_challenge_type: HTTP-01
+# 当选择 HTTP-01 挑战时，Let's Encrypt 必须设置验证端点，
+# 它将监听在：
+# :http = 端口 80
+## tls_letsencrypt_listen: ":80"
+
+## 使用已定义的证书：
+# tls_cert_path: /etc/headscale/cert/cert.pem
+# tls_key_path: /etc/headscale/cert/key.pem
+# ----日志配置---
+log:
+  format: text
+  level: info
+
+# ----ACL 策略配置---
+# headscale supports Tailscale's ACL policies.
+policy:
+  # 模式可以是 "file" 或 "database"，用于定义 ACL 策略的存储和读取位置。
+  mode: file
+  # 如果模式设置为 "file"，则为包含 ACL 策略的 HuJSON 文件路径。
+  path: "acl.hujson"
+
+## ----DNS 配置---
+# headscale supports Tailscale's DNS configuration and MagicDNS.
+# 请注意，要使 DNS 配置生效，客户端必须启用 `--accept-dns=true` 选项。
+# 这是 Tailscale 客户端的默认设置。
+# 设置 DNS 配置下的任意字段并在客户端启用 `--accept-dns=true` 将与客户端的 DNS 管理器集成，
+# 或覆盖 /etc/resolv.conf。
+# https://tailscale.com/kb/1235/resolv-conf
+# 如果您想停止 Headscale 管理 DNS 配置，
+# 则 `dns` 下的所有字段都应设置为空值。
+dns:
+  # 是否使用 [MagicDNS](https://tailscale.com/kb/1081/magicdns/)。
+  magic_dns: true
+  # 定义用于创建 MagicDNS 主机名的基础域名。
+  # 此域名必须与 server_url 的域名不同。
+  # `base_domain` 必须是 FQDN，不带末尾的点。
+  # 主机的 FQDN 将是 `hostname.base_domain`（例如 _myhost.example.com_）。
+  base_domain: example.com
+  # 暴露给客户端的 DNS 服务器列表。
+  nameservers:
+    global:
+      - 1.1.1.1
+      - 1.0.0.1
+      - 2606:4700:4700::1111
+      - 2606:4700:4700::1001
+    # 域名与对应 DNS 服务器的映射。
+    split: {}
+      # foo.bar.com:
+      #   - 1.1.1.1
+      # darp.headscale.net:
+      #   - 1.1.1.1
+      #   - 8.8.8.8
+  # 设置自定义 DNS 搜索域。启用 MagicDNS 时，
+  # 您的 tailnet base_domain 始终是第一个搜索域。
+  search_domains: []
+  # 额外的 DNS 记录
+  # 目前仅支持 A 和 AAAA 记录（在 Tailscale 端）
+  extra_records: []
+  #   - name: "grafana.myvpn.example.com"
+  #     type: "A"
+  #     value: "100.64.0.3"
+  #
+  #   # 也可以写成一行
+  #   - { name: "prometheus.myvpn.example.com", type: "A", value: "100.64.0.3" }
+  #
+  # 或者，额外的 DNS 记录可以从 JSON 文件加载。
+  # Headscale 在每次更改时处理此文件。
+  # extra_records_path: /var/lib/headscale/extra-records.json
+
+# ----CLI Unix Socket---
+# CLI 用于无需认证连接的 Unix socket
+# 注意：生产环境建议设置为类似以下路径：
+unix_socket: /var/run/headscale/headscale.sock
+unix_socket_permission: "0770"
+
+# ----OpenID Connect 配置---
+
+# ----Logtail 日志配置---
+# Logtail 是 Tailscale 的日志和审计基础设施，它允许控制面板指示 Tailscale 节点将其活动日志发送到远程服务器。
+logtail:
+  enabled: false
+
+# ----WireGuard 端口随机化---
+randomize_client_port: false
+
