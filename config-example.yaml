@@ -17,10 +17,6 @@ server_url: 'http://hs-admin'
 # listen_addr: 0.0.0.0:8080
 listen_addr: 0.0.0.0:8080
 
-# ----服务器 IP（域名）/协议---
-protocol: http
-host: 127.0.0.1
-
 # Address to listen to /metrics, you may want
 # to keep this endpoint private to your internal
 # network
