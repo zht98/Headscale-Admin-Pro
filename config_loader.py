@@ -16,11 +16,16 @@ with open('/etc/headscale/config.yaml', 'r') as file:
 SECRET_KEY = 'SFhkrGKQL2yB9F'
 PERMANENT_SESSION_LIFETIME = 3600
 
-listen_addr = config_yaml.get('listen_addr', '0.0.0.0:8080') 
+# listen_addr = config_yaml.get('listen_addr', '0.0.0.0:8080') 
+# _, port_str = listen_addr.rsplit(':', 1)
+# SERVER_HOST = f'http://127.0.0.1:{port_str}'  #从headscale配置文件中获取端口号，内部通信使用
+
+protocol = config_yaml.get('protocol', 'http')  # 默认 http
+host = config_yaml.get('host', '127.0.0.1')     # 默认 127.0.0.1
+host = host.replace('http://', '').replace('https://', '')  # 防止 host 写成 https://xxx
+listen_addr = config_yaml.get('listen_addr', '0.0.0.0:8080')
 _, port_str = listen_addr.rsplit(':', 1)
-SERVER_HOST = f'http://127.0.0.1:{port_str}'  #从headscale配置文件中获取端口号，内部通信使用
-
-
+SERVER_HOST = f'{protocol}://{host}:{port_str}'
 
 # 从 yaml 配置文件中获取headscale配置项
 
