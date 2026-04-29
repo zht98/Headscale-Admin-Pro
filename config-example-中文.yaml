@@ -9,7 +9,7 @@
 # 客户端将连接的 URL。
 # 通常这是一个域名，例如：
 # https://myheadscale.example.com:443
-server_url: 'http://IP:端口'
+server_url: 'http(https)://IP(域名):端口'
 
 # ----服务器监听地址---
 # 服务器监听 / 绑定的地址
