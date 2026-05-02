@@ -128,7 +128,7 @@ def topNodes():
 
         # 将字典的值（统计信息）转换为列表，以便前端表格展示
         # 并按累计节点数降序排序
-        result_list = sorted(user_stats.values(), key=lambda x: x['nodes'], reverse=True)
+        result_list = sorted(user_stats.values(), key=lambda x: x['online'], reverse=True)
         
         # 计算总节点数，用于表格分页等功能
         total_nodes_count = len(nodes)
